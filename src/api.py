@@ -1,5 +1,6 @@
 """对外暴露的编排服务 API。"""
 
+import os
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -16,7 +17,7 @@ class SolveRequest(BaseModel):
     # 调用链路 ID。为空时由编排器自动生成 UUID。
     trace_id: Optional[str] = None
     # 下游模型名，需与本地 OpenAI 兼容服务中的模型 ID 一致。
-    model: str = "Qwen2-0.5B-Instruct"
+    model: str = os.environ.get("MODEL_ID", "Qwen3.5-0.8B")
     # 标准 Chat Completions 消息数组。
     messages: List[Dict[str, Any]]
     # 生成参数，保持与 OpenAI 风格接口一致。

@@ -33,14 +33,15 @@ llm-agent-lab/
 
 1. Python 3.10+（建议）  
 2. 安装 `requirements.txt` 中依赖  
-3. 本地模型目录（默认）：`/mnt/xieshan/checkpoints/Qwen2-0.5B-Instruct`  
+3. 本地模型目录（默认示例）：`./models/Qwen3.5-0.8B`  
 
-如果你的模型路径不同，请修改 `src/local_llm_server.py` 里的 `MODEL_PATH`。
+如果你的模型路径不同，请通过环境变量 `MODEL_PATH` 指定。  
+TODO: 替换成你们团队统一的模型存储路径规范，并写入部署文档。
 
 ## 安装依赖
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
@@ -55,10 +56,10 @@ pip install -U huggingface_hub
 
 ## 下载 Qwen3.5-0.8B
 
-默认下载仓库 `Qwen/Qwen3.5-0.8B` 到 `/mnt/xieshan/checkpoints/Qwen3.5-0.8B`：
+默认下载仓库 `Qwen/Qwen3.5-0.8B` 到 `./models/Qwen3.5-0.8B`：
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 bash scripts/download_qwen3_5_0_8b.sh
 ```
 
@@ -66,7 +67,7 @@ bash scripts/download_qwen3_5_0_8b.sh
 
 ```bash
 MODEL_REPO=Qwen/Qwen3.5-0.8B \
-TARGET_DIR=/mnt/xieshan/checkpoints/Qwen3.5-0.8B \
+TARGET_DIR=/path/to/your/models/Qwen3.5-0.8B \
 bash scripts/download_qwen3_5_0_8b.sh
 ```
 
@@ -77,14 +78,14 @@ bash scripts/download_qwen3_5_0_8b.sh
 ### 终端 1：启动本地模型服务（8000）
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 CUDA_VISIBLE_DEVICES=7 uvicorn src.local_llm_server:app --host 0.0.0.0 --port 8000
 ```
 
 ### 终端 2：启动编排服务（9000）
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 uvicorn src.api:app --host 0.0.0.0 --port 9000
 ```
 
@@ -98,7 +99,7 @@ bash scripts/run_orchestrator.sh
 ## 快速验证
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 python scripts/smoke_test_text.py
 python scripts/smoke_test_vlm.py
 ```
@@ -115,14 +116,14 @@ python scripts/smoke_test_vlm.py
 单次提问：
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 python scripts/cli_solve.py --prompt "请解释 ReAct，并给一个示例。"
 ```
 
 交互模式：
 
 ```bash
-cd /mnt/xieshan/program/llm-agent-lab
+cd /path/to/llm-agent-lab
 python scripts/cli_solve.py
 ```
 
@@ -167,9 +168,9 @@ curl --noproxy '*' -sS http://127.0.0.1:9000/solve \
 
 ## 当前实现限制
 
-1. 默认模型为文本模型 `Qwen2-0.5B-Instruct`。  
-2. `smoke_test_vlm.py` 虽传入图文结构，但当前本地服务会将内容扁平化为文本处理，不是真正的视觉理解。  
-3. `local_llm_server.py` 当前实现是最小可用版本，仅支持非流式返回。  
+1. 仅支持非流式返回（`stream=false`）。  
+2. 图文能力依赖所加载模型本身：若模型/processor 不支持视觉输入，请求会自动降级为文本路径（保留 `<image>` 占位符）。  
+3. 默认仍是最小可用实现，未覆盖 function calling、tool 调用等高级 OpenAI 字段。  
 
 ## 常见问题
 

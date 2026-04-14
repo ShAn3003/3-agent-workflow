@@ -4,9 +4,10 @@ set -euo pipefail
 
 # 可通过环境变量覆盖：
 #   MODEL_REPO=Qwen/Qwen3.5-0.8B
-#   TARGET_DIR=/mnt/xieshan/checkpoints/Qwen3.5-0.8B
+#   TARGET_DIR=/path/to/your/models/Qwen3.5-0.8B
+# TODO: 将 TARGET_DIR 改成你机器上的真实模型目录（建议使用绝对路径）。
 MODEL_REPO="${MODEL_REPO:-Qwen/Qwen3.5-0.8B}"
-TARGET_DIR="${TARGET_DIR:-/mnt/xieshan/checkpoints/Qwen3.5-0.8B}"
+TARGET_DIR="${TARGET_DIR:-./models/Qwen3.5-0.8B}"
 export MODEL_REPO TARGET_DIR
 
 echo "[INFO] model repo: ${MODEL_REPO}"
@@ -19,7 +20,8 @@ import os
 import sys
 
 repo = os.environ.get("MODEL_REPO", "Qwen/Qwen3.5-0.8B")
-target = os.environ.get("TARGET_DIR", "/mnt/xieshan/checkpoints/Qwen3.5-0.8B")
+# TODO: 将 TARGET_DIR 改成你机器上的真实模型目录（建议使用绝对路径）。
+target = os.environ.get("TARGET_DIR", "./models/Qwen3.5-0.8B")
 
 try:
     from huggingface_hub import snapshot_download

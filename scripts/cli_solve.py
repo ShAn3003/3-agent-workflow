@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="Qwen2-0.5B-Instruct",
+        default="Qwen3.5-0.8B",
         help="请求中的模型名（需与后端可用模型一致）",
     )
     parser.add_argument("--timeout", type=int, default=300, help="请求超时（秒）")

@@ -1,0 +1,14 @@
+# Python cache/artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+
+# Runtime outputs
+outputs/logs/*.jsonl
+
+# Local temp caches
+scripts/__pycache__/
+src/__pycache__/
