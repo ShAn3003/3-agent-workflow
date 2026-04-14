@@ -1,3 +1,5 @@
+"""3-Agent 串行编排核心逻辑。"""
+
 import asyncio
 import time
 import uuid
@@ -11,6 +13,8 @@ from .logutil import append_jsonl
 
 @dataclass
 class LLMEndpoint:
+    """OpenAI 兼容后端配置。"""
+
     base_url: str
     api_key: str = "EMPTY"
     timeout_s: float = 180.0
@@ -24,6 +28,8 @@ async def _chat(
     messages: List[Dict[str, Any]],
     gen: Dict[str, Any],
 ) -> Tuple[str, int, int]:
+    """调用一次 Chat Completions，并返回文本和输入/输出长度统计。"""
+
     url = f"{endpoint.base_url}/chat/completions"
     payload = {
         "model": model,
@@ -35,6 +41,7 @@ async def _chat(
         "extra_body": {"top_k": int(gen.get("top_k", 20))},
     }
 
+    # 失败重试：用于处理短暂的模型服务抖动。
     last_err: Optional[Exception] = None
     for _ in range(endpoint.max_retries + 1):
         try:
@@ -52,10 +59,14 @@ async def _chat(
 
 
 def solver_system() -> str:
+    """Agent-1 系统提示词。"""
+
     return "你是Agent-1（解题）。清晰作答，不确定请标注。"
 
 
 def reviewer_system() -> str:
+    """Agent-2 系统提示词。"""
+
     return (
         "你是Agent-2（审稿）。输出4段："
         "1) 错误/不一致点（至少3条，若无则解释）"
@@ -66,6 +77,8 @@ def reviewer_system() -> str:
 
 
 def synthesizer_system() -> str:
+    """Agent-3 系统提示词。"""
+
     return "你是Agent-3（综合定稿）。逐条吸收审稿意见，给最终答案并标注不确定性。"
 
 
@@ -76,6 +89,9 @@ async def run_three_agents(
     gen: Dict[str, Any],
     trace_id: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """按 Agent-1 -> Agent-2 -> Agent-3 顺序执行完整流程。"""
+
+    # 每次请求都绑定一个 trace_id，便于日志追踪和离线分析。
     tid = trace_id or str(uuid.uuid4())
     t0 = time.time()
 
@@ -89,11 +105,13 @@ async def run_three_agents(
             timeout=endpoint.timeout_s,
             trust_env=False,
         ) as client:
+            # Step 1: 先由解题 Agent 生成首稿。
             s = time.time()
             a1_messages = [{"role": "system", "content": solver_system()}, *user_messages]
             a1, i1, o1 = await _chat(client, endpoint, model, a1_messages, gen)
             a1_meta = {"latency_s": round(time.time() - s, 3), "input_len": i1, "output_len": o1}
 
+            # Step 2: 审稿 Agent 读取用户问题 + 首稿，输出批评性反馈。
             s = time.time()
             a2_messages = [
                 {"role": "system", "content": reviewer_system()},
@@ -104,6 +122,7 @@ async def run_three_agents(
             a2, i2, o2 = await _chat(client, endpoint, model, a2_messages, gen)
             a2_meta = {"latency_s": round(time.time() - s, 3), "input_len": i2, "output_len": o2}
 
+            # Step 3: 综合 Agent 汇总前两者信息，给出最终答复。
             s = time.time()
             a3_messages = [
                 {"role": "system", "content": synthesizer_system()},
@@ -131,6 +150,7 @@ async def run_three_agents(
     }
 
     append_jsonl(result)
+    # 若流程失败，先落日志再抛错，保证故障可回溯。
     if err:
         raise RuntimeError(err)
     return result

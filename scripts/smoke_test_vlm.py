@@ -1,3 +1,5 @@
+"""图文结构输入场景的最小联调脚本。"""
+
 import requests
 
 payload = {
@@ -10,6 +12,7 @@ payload = {
     }]
 }
 s = requests.Session()
+# 避免代理导致本地请求走外网。
 s.trust_env = False
 r = s.post("http://127.0.0.1:9000/solve", json=payload, timeout=300)
 print(r.status_code)
